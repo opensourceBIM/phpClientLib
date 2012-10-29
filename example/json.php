@@ -1,7 +1,6 @@
 <?
-	error_log("hit");
 	include "header.php";
-	include "bimserverapi.php";
+	include "../bimserverapi.php";
 
 	$data = file_get_contents('php://input');
 	$bimServerApi = new BimServerApi("");
