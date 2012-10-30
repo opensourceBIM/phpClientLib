@@ -7,8 +7,8 @@
 	
 	class NotificationHandler {
 	
-		public function newLogAction($logAction, $serviceName, $token=null, $apiUrl=null) {
-			if ($serviceName == "PHP Quantizator") {
+		public function newLogAction($uuid, $logAction, $serviceIdentifier, $profileIdentifier, $token=null, $apiUrl=null) {
+			if ($serviceIdentifier == "PHP Quantizator") {
 				if ($logAction["__type"] == "SNewRevisionAdded") {
 					$bimServerApi = new BimServerApi($apiUrl);
 					$roid = $logAction["revisionId"];
@@ -36,7 +36,7 @@
 					
 					$bimServerApi->addExtendedDataToRevision($token, $roid, "HTML Summary", $html, $extendedDataSchema["oid"]);
 				}
-				return array();
+				return json_decode("{}");
 			} else if ($serviceName == "PHP Logger") {
 				$sql = "INSERT INTO incoming SET message='" . json_encode($logAction) . "'";
 				mysql_query($sql);
