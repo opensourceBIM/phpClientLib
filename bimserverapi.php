@@ -1,8 +1,8 @@
 <?
 	class BimServerApi {
 
-		function __construct($apiUrl) {
-			$this->apiUrl = $apiUrl;
+		function __construct($baseUrl) {
+			$this->baseUrl = $baseUrl;
 		}
 		
 		private function do_post_request($url, $data, $optional_headers = null) {
@@ -52,7 +52,9 @@
 
 		private function call($request) {
 			$data = json_encode($request);
-			$response = json_decode($this->do_post_request($this->apiUrl, $data), true);
+			$resultText = $this->do_post_request($this->baseUrl . "/jsonapi", $data);
+			error_log($resultText);
+			$response = json_decode($resultText, true);
 			if ($response == NULL) {
 				if (function_exists("json_last_error")) {
 					throw new Exception("JSON could not be decoded " . $this->convertJsonDecodeError(json_last_error()));
@@ -137,6 +139,13 @@
 			return $response;
 		}
 		
+		public function getRevision($token, $roid) {
+			$request = $this->buildRequest($token, "ServiceInterface", "getRevision", array(
+				"roid" => $roid
+			));
+			return $this->call($request);
+		}
+		
 		public function getExtendedDataSchemaByNamespace($token, $ns) {
 			$request = $this->buildRequest($token, "ServiceInterface", "getExtendedDataSchemaByNamespace", array(
 				"namespace" => $ns
@@ -165,6 +174,38 @@
 				)
 			));
 			return $this->call($request);
+		}
+		
+		public function getSuggestedDeserializerForExtension($token, $extension) {
+			$request = $this->buildRequest($token, "ServiceInterface", "getSuggestedDeserializerForExtension", array(
+				"extension" => $extension
+			));
+			return $this->call($request);			
+		}
+		
+		public function checkin($token, $poid, $comment, $filename, $deserializerOid, $filename) {
+			$url = $this->baseUrl . "/upload";
+			$ch = curl_init($url);
+
+			$fields = array(
+				"tokenString" => $token["tokenString"],
+				"tokenExpires" => $token["expires"],
+				"poid" => $poid,
+				"comment" => $comment,
+				"merge" => false,
+				"deserializerOid" => $deserializerOid,
+				"file" => "@" . $filename
+			);
+
+			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+			$response = curl_exec($ch);
+			if ($response == FALSE) {
+				throw new Exception(curl_error($ch));
+			}
+			curl_close($ch);
 		}
 		
 		public function getDataObjects($token, $roid) {

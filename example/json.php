@@ -37,9 +37,21 @@
 					$bimServerApi->addExtendedDataToRevision($token, $roid, "HTML Summary", $html, $extendedDataSchema["oid"]);
 				}
 				return json_decode("{}");
-			} else if ($serviceName == "PHP Logger") {
+			} else if ($serviceIdentifier == "PHP Logger") {
 				$sql = "INSERT INTO incoming SET message='" . json_encode($logAction) . "'";
 				mysql_query($sql);
+			} else if ($serviceIdentifier == "Floor Demo") {
+				if ($logAction["__type"] == "SNewRevisionAdded") {
+					$bimServerApi = new BimServerApi($apiUrl);
+					$revision = $bimServerApi->getRevision($token, $logAction["revisionId"]);
+					if ($revision["comment"] == "M1_project (start).ifc") {
+						$poid = $logAction["projectId"];
+						
+						$deserializer = $bimServerApi->getSuggestedDeserializerForExtension($token, "ifc");
+						
+						$bimServerApi->checkin($token, $poid, "Added floors", "M1_project (result).ifc", $deserializer["oid"], getcwd() . "/ifcfiles/M1_project (result).ifc");
+					}
+				}			
 			}
 		}
 		
@@ -78,6 +90,16 @@
 						"identifier" => "p2",
 						"name" => "Log only server start/stop notifications",
 						"description" => "Will log all start/stop notifications",
+						"publicProfile" => true
+					)
+				);
+			} else if ($serviceName == "Floor Demo") {
+				return array(
+					array(
+						"__type" => "SProfileDescriptor",
+						"identifier" => "p1",
+						"name" => "Add floors",
+						"description" => "Add floors",
 						"publicProfile" => true
 					)
 				);
