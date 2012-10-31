@@ -3,16 +3,16 @@
 	include "../bimserverapi.php";
 
 	$data = file_get_contents('php://input');
-	$bimServerApi = new BimServerApi("");
+	$bimServerApi = new BimServerApi("", null);
 	
 	class NotificationHandler {
 	
 		public function newLogAction($uuid, $logAction, $serviceIdentifier, $profileIdentifier, $token=null, $apiUrl=null) {
 			if ($serviceIdentifier == "PHP Quantizator") {
 				if ($logAction["__type"] == "SNewRevisionAdded") {
-					$bimServerApi = new BimServerApi($apiUrl);
+					$bimServerApi = new BimServerApi($apiUrl, $token);
 					$roid = $logAction["revisionId"];
-					$response = $bimServerApi->getDataObjects($token, $roid);
+					$response = $bimServerApi->getDataObjects($roid);
 					
 					$map = array();
 					foreach ($response as $dataobject) {
@@ -32,9 +32,9 @@
 					}
 					$html .= "</table>";
 					
-					$extendedDataSchema = $bimServerApi->getExtendedDataSchemaByNamespace($token, "http://extend.bimserver.org/htmlsummary");
+					$extendedDataSchema = $bimServerApi->getExtendedDataSchemaByNamespace("http://extend.bimserver.org/htmlsummary");
 					
-					$bimServerApi->addExtendedDataToRevision($token, $roid, "HTML Summary", $html, $extendedDataSchema["oid"]);
+					$bimServerApi->addExtendedDataToRevision($roid, "HTML Summary", $html, $extendedDataSchema["oid"]);
 				}
 				return json_decode("{}");
 			} else if ($serviceIdentifier == "PHP Logger") {
@@ -42,14 +42,14 @@
 				mysql_query($sql);
 			} else if ($serviceIdentifier == "Floor Demo") {
 				if ($logAction["__type"] == "SNewRevisionAdded") {
-					$bimServerApi = new BimServerApi($apiUrl);
-					$revision = $bimServerApi->getRevision($token, $logAction["revisionId"]);
+					$bimServerApi = new BimServerApi($apiUrl, $token);
+					$revision = $bimServerApi->getRevision($logAction["revisionId"]);
 					if ($revision["comment"] == "M1_project (start).ifc") {
 						$poid = $logAction["projectId"];
 						
-						$deserializer = $bimServerApi->getSuggestedDeserializerForExtension($token, "ifc");
+						$deserializer = $bimServerApi->getSuggestedDeserializerForExtension("ifc");
 						
-						$bimServerApi->checkin($token, $poid, "Added floors", "M1_project (result).ifc", $deserializer["oid"], getcwd() . "/ifcfiles/M1_project (result).ifc");
+						$bimServerApi->checkin($poid, "Added floors", "M1_project (result).ifc", $deserializer["oid"], getcwd() . "/ifcfiles/M1_project (result).ifc");
 					}
 				}			
 			}

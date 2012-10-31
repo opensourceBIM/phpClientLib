@@ -1,8 +1,9 @@
 <?
 	class BimServerApi {
 
-		function __construct($baseUrl) {
+		function __construct($baseUrl, $token) {
 			$this->baseUrl = $baseUrl;
+			$this->token = $token;
 		}
 		
 		private function do_post_request($url, $data, $optional_headers = null) {
@@ -82,11 +83,11 @@
 			}
 		}
 		
-		private function buildRequest($token, $interface, $method, $parameters) {
+		private function buildRequest($interface, $method, $parameters) {
 			$request = array(
 				"token" => array(
-					"tokenString" => $token['tokenString'],
-					"expires" => $token['expires']
+					"tokenString" => $this->token['tokenString'],
+					"expires" => $this->token['expires']
 				),
 				"requests" => array(
 					array(
@@ -139,22 +140,22 @@
 			return $response;
 		}
 		
-		public function getRevision($token, $roid) {
-			$request = $this->buildRequest($token, "ServiceInterface", "getRevision", array(
+		public function getRevision($roid) {
+			$request = $this->buildRequest("ServiceInterface", "getRevision", array(
 				"roid" => $roid
 			));
 			return $this->call($request);
 		}
 		
-		public function getExtendedDataSchemaByNamespace($token, $ns) {
-			$request = $this->buildRequest($token, "ServiceInterface", "getExtendedDataSchemaByNamespace", array(
+		public function getExtendedDataSchemaByNamespace($ns) {
+			$request = $this->buildRequest("ServiceInterface", "getExtendedDataSchemaByNamespace", array(
 				"namespace" => $ns
 			));
 			return $this->call($request);
 		}
 		
-		public function addExtendedDataToRevision($token, $roid, $title, $data, $schemaId) {
-			$request = $this->buildRequest($token, "ServiceInterface", "uploadFile", array(
+		public function addExtendedDataToRevision($roid, $title, $data, $schemaId) {
+			$request = $this->buildRequest("ServiceInterface", "uploadFile", array(
 				"file" => array(
 					"__type" => "SFile",
 					"data" => base64_encode($data),
@@ -164,7 +165,7 @@
 			));
 			$fileId = $this->call($request);
 
-			$request = $this->buildRequest($token, "ServiceInterface", "addExtendedDataToRevision", array(
+			$request = $this->buildRequest("ServiceInterface", "addExtendedDataToRevision", array(
 				"roid" => $roid,
 				"extendedData" => array(
 					"__type" => "SExtendedData",
@@ -176,20 +177,20 @@
 			return $this->call($request);
 		}
 		
-		public function getSuggestedDeserializerForExtension($token, $extension) {
-			$request = $this->buildRequest($token, "ServiceInterface", "getSuggestedDeserializerForExtension", array(
+		public function getSuggestedDeserializerForExtension($extension) {
+			$request = $this->buildRequest("ServiceInterface", "getSuggestedDeserializerForExtension", array(
 				"extension" => $extension
 			));
 			return $this->call($request);			
 		}
 		
-		public function checkin($token, $poid, $comment, $filename, $deserializerOid, $filename) {
+		public function checkin($poid, $comment, $filename, $deserializerOid, $filename) {
 			$url = $this->baseUrl . "/upload";
 			$ch = curl_init($url);
 
 			$fields = array(
-				"tokenString" => $token["tokenString"],
-				"tokenExpires" => $token["expires"],
+				"tokenString" => $this->token["tokenString"],
+				"tokenExpires" => $this->token["expires"],
 				"poid" => $poid,
 				"comment" => $comment,
 				"merge" => false,
@@ -208,8 +209,8 @@
 			curl_close($ch);
 		}
 		
-		public function getDataObjects($token, $roid) {
-			$request = $this->buildRequest($token, "ServiceInterface", "getDataObjects", array(
+		public function getDataObjects($roid) {
+			$request = $this->buildRequest("ServiceInterface", "getDataObjects", array(
 				"roid" => $roid
 			));
 			return $this->call($request);
