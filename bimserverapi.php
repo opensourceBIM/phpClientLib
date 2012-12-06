@@ -85,10 +85,7 @@
 		
 		private function buildRequest($interface, $method, $parameters) {
 			$request = array(
-				"token" => array(
-					"tokenString" => $this->token['tokenString'],
-					"expires" => $this->token['expires']
-				),
+				"token" => $this->token,
 				"requests" => array(
 					array(
 						"interface" => $interface,
@@ -189,8 +186,7 @@
 			$ch = curl_init($url);
 
 			$fields = array(
-				"tokenString" => $this->token["tokenString"],
-				"tokenExpires" => $this->token["expires"],
+				"token" => $this->token,
 				"poid" => $poid,
 				"comment" => $comment,
 				"merge" => false,
