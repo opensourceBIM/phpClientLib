@@ -1,6 +1,7 @@
 <?
 	include "header.php";
 	include "../bimserverapi.php";
+	include "phpmailer.inc.php";
 
 	$data = file_get_contents('php://input');
 	$bimServerApi = new BimServerApi("", null);
@@ -49,7 +50,24 @@
 						
 						$deserializer = $bimServerApi->getSuggestedDeserializerForExtension("ifc");
 						
-						$bimServerApi->checkin($poid, "Added floors", "M1_project (result).ifc", $deserializer["oid"], getcwd() . "/ifcfiles/M1_project (result).ifc");
+						$mail             = new PHPMailer(); // defaults to using php "mail()"
+						$mail->SetFrom('demo@bimserver.org', 'Demo');
+						
+						$mail->AddAddress("ruben@logic-labs.nl", "Ruben de Laat");
+						$mail->AddAddress("demo@bimserver.org", "Demo");
+						
+						$mail->Subject    = "Floors added";
+						$mail->AltBody    = "Floors added";
+						$mail->MsgHTML("Floors added");
+						
+						$mail->AddAttachment(getcwd() . "/files/floor.xls");
+						$mail->AddAttachment(getcwd() . "/files/floor.ifc");
+
+						if(!$mail->Send()) {
+						  error_log("Mailer Error: " . $mail->ErrorInfo);
+						}
+						
+						$bimServerApi->checkin($poid, "Added floors", "M1_project (result).ifc", $deserializer["oid"], getcwd() . "/files/M1_project (result).ifc");
 					}
 				}			
 			}
