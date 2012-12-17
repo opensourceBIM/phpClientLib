@@ -144,6 +144,13 @@
 			return $this->call($request);
 		}
 
+		public function getProject($oid) {
+			$request = $this->buildRequest("ServiceInterface", "getProjectByPoid", array(
+				"poid" => $oid
+			));
+			return $this->call($request);
+		}
+
 		public function getExtendedData($edid) {
 			$request = $this->buildRequest("ServiceInterface", "getExtendedData", array(
 				"oid" => $edid

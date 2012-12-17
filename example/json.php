@@ -9,6 +9,7 @@
 	class NotificationHandler {
 	
 		public function newLogAction($uuid, $logAction, $serviceIdentifier, $profileIdentifier, $token=null, $apiUrl=null) {
+			error_log($serviceIdentifier . "." . $profileIdentifier);
 			if ($serviceIdentifier == "PHP Quantizator") {
 				if ($logAction["__type"] == "SNewRevisionAdded") {
 					$bimServerApi = new BimServerApi($apiUrl, $token);
@@ -73,7 +74,7 @@
 					}
 				}			
 			} else if ($serviceIdentifier == "PHP BCF Mailer") {
-				if ($logAction["__type"] == "SNewExtendedDataAddedToRevision") {
+				if ($logAction["__type"] == "SExtendedDataAddedToRevision") {
 					$bimServerApi = new BimServerApi($apiUrl, $token);
 					$revision = $bimServerApi->getRevision($logAction["revisionId"]);
 					$project = $bimServerApi->getProject($revision["projectId"]);
