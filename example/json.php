@@ -45,6 +45,7 @@
 				if ($logAction["__type"] == "SNewRevisionAdded") {
 					$bimServerApi = new BimServerApi($apiUrl, $token);
 					$revision = $bimServerApi->getRevision($logAction["revisionId"]);
+					$user = $bimServerApi->getUserByUoid($revision["userId"]);
 					if ($revision["comment"] == "M1_project (start).ifc") {
 						$poid = $logAction["projectId"];
 						
@@ -53,9 +54,10 @@
 						$mail             = new PHPMailer(); // defaults to using php "mail()"
 						$mail->SetFrom('demo@bimserver.org', 'Demo');
 						
-						$mail->AddAddress("ruben@logic-labs.nl", "Ruben de Laat");
-						$mail->AddAddress("demo@bimserver.org", "Demo");
-						
+						$mail->AddAddress($user["username"], $user["name"]);
+						$mail->AddCC("ruben@logic-labs.nl", "Ruben de Laat");
+						$mail->AddCC("demo@bimserver.org", "Demo");
+	
 						$mail->Subject    = "Floors added";
 						$mail->AltBody    = "Floors added";
 						$mail->MsgHTML("Floors added");
@@ -70,6 +72,36 @@
 						$bimServerApi->checkin($poid, "Added floors", "M1_project (result).ifc", $deserializer["oid"], getcwd() . "/files/M1_project (result).ifc");
 					}
 				}			
+			} else if ($serviceIdentifier == "PHP BCF Mailer") {
+				if ($logAction["__type"] == "SNewExtendedDataAddedToRevision") {
+					$bimServerApi = new BimServerApi($apiUrl, $token);
+					$revision = $bimServerApi->getRevision($logAction["revisionId"]);
+					$project = $bimServerApi->getProject($revision["projectId"]);
+					$extendedData = $bimServerApi->getExtendedData($logAction["extendedDataId"]);
+					$extendedDataSchema = $bimServerApi->getExtendedDataSchema($extendedData["schemaId"]);
+					if ($extendedDataSchema["namespace"] == "http://www.buildingsmart-tech.org/specifications/bcf-releases") {
+						$mail             = new PHPMailer(); // defaults to using php "mail()"
+						$mail->SetFrom('demo@bimserver.org', 'Demo');
+						
+						$mail->Subject    = "Floors added";
+						$mail->AltBody    = "Floors added";
+						$mail->MsgHTML("Floors added");
+						
+						$mail->AddAttachment(getcwd() . "/files/floor.xls");
+						$mail->AddAttachment(getcwd() . "/files/floor.ifc");
+
+						foreach ($project["hasAuthorizedUsers"] as $userId) {
+							$user = $bimServerApi->getUserByUoid($userId);
+							$mail->AddAddress($user["username"], $user["name"]);
+							$mail->AddCC("ruben@logic-labs.nl", "Ruben de Laat");
+							$mail->AddCC("demo@bimserver.org", "Demo");
+						}
+
+						if(!$mail->Send()) {
+						  error_log("Mailer Error: " . $mail->ErrorInfo);
+						}
+					}
+				}
 			}
 		}
 		
@@ -116,8 +148,25 @@
 					array(
 						"__type" => "SProfileDescriptor",
 						"identifier" => "p1",
-						"name" => "Add floors",
-						"description" => "Add floors",
+						"name" => "Kanaalplaten",
+						"description" => "Vervangt vloer door kanaalplaten",
+						"publicProfile" => true
+					),
+					array(
+						"__type" => "SProfileDescriptor",
+						"identifier" => "p2",
+						"name" => "Breedplaten",
+						"description" => "Vervangt vloer door breedplaten",
+						"publicProfile" => true
+					)
+				);
+			} else if ($serviceName == "PHP BCF Mailer") {
+				return array(
+					array(
+						"__type" => "SProfileDescriptor",
+						"identifier" => "p1",
+						"name" => "Default",
+						"description" => "Default",
 						"publicProfile" => true
 					)
 				);

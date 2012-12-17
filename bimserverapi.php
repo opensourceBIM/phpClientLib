@@ -143,7 +143,21 @@
 			));
 			return $this->call($request);
 		}
+
+		public function getExtendedData($edid) {
+			$request = $this->buildRequest("ServiceInterface", "getExtendedData", array(
+				"oid" => $edid
+			));
+			return $this->call($request);
+		}
 		
+		public function getUserByUoid($uoid) {
+			$request = $this->buildRequest("ServiceInterface", "getUserByUoid", array(
+				"uoid" => $uoid
+			));
+			return $this->call($request);
+		}
+
 		public function getExtendedDataSchemaByNamespace($ns) {
 			$request = $this->buildRequest("ServiceInterface", "getExtendedDataSchemaByNamespace", array(
 				"namespace" => $ns
@@ -151,6 +165,13 @@
 			return $this->call($request);
 		}
 		
+		public function getExtendedDataSchema($oid) {
+			$request = $this->buildRequest("ServiceInterface", "getExtendedDataSchemaById", array(
+				"oid" => $oid
+			));
+			return $this->call($request);
+		}
+
 		public function addExtendedDataToRevision($roid, $title, $data, $schemaId) {
 			$request = $this->buildRequest("ServiceInterface", "uploadFile", array(
 				"file" => array(
