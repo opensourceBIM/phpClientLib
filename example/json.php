@@ -84,12 +84,14 @@
 						$mail             = new PHPMailer(); // defaults to using php "mail()"
 						$mail->SetFrom('demo@bimserver.org', 'Demo');
 						
-						$mail->Subject    = "Floors added";
-						$mail->AltBody    = "Floors added";
-						$mail->MsgHTML("Floors added");
+						$mail->Subject    = "New BCF generated";
+						$mail->AltBody    = "New BCF generated";
+						$mail->MsgHTML("New BCF generated");
 						
-						$mail->AddAttachment(getcwd() . "/files/floor.xls");
-						$mail->AddAttachment(getcwd() . "/files/floor.ifc");
+						$file = $bimServerApi->getFile($extendedData["fileId"]);
+						file_put_contents($file["filename"], $file["data"]);
+						
+						$mail->AddAttachment($file["filename"], $file["filename"], "base64", $file["mime"]);
 
 						foreach ($project["hasAuthorizedUsers"] as $userId) {
 							$user = $bimServerApi->getUserByUoid($userId);

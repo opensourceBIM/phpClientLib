@@ -151,6 +151,13 @@
 			return $this->call($request);
 		}
 
+		public function getFile($fileId) {
+			$request = $this->buildRequest("ServiceInterface", "getFile", array(
+				"fileId" => $fileId
+			));
+			return $this->call($request);
+		}
+
 		public function getExtendedData($edid) {
 			$request = $this->buildRequest("ServiceInterface", "getExtendedData", array(
 				"oid" => $edid
