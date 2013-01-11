@@ -14,23 +14,14 @@
 				if ($logAction["__type"] == "SNewRevisionAdded") {
 					$bimServerApi = new BimServerApi($apiUrl, $token);
 					$roid = $logAction["revisionId"];
-					$response = $bimServerApi->getDataObjects($roid);
-					
-					$map = array();
-					foreach ($response as $dataobject) {
-						if (array_key_exists("type", $dataobject)) {
-							$type = $dataobject["type"];
-							if (array_key_exists($type, $map)) {
-								$map[$type] = $map[$type] + 1;
-							} else {
-								$map[$type] = 1;
-							}
-						}
-					}
+					$response = $bimServerApi->getRevisionSummary($roid);
 					
 					$html = "<table><tr><th>Type</th><th>Amount</th></tr>";
-					foreach ($map as $type => $amount) {
-						$html .= "<tr><td>" . $type . "</td><td>" . $amount . "</td></tr>";
+					foreach ($response["list"] as $container) {
+						$html .= "<tr><td colspan=\"2\">" . $container["name"] . "</td></tr>";
+						foreach ($container["types"] as $type) {
+							$html .= "<tr><td>" . $type["name"] . "</td><td>" . $type["count"] . "</td></tr>";
+						}
 					}
 					$html .= "</table>";
 					

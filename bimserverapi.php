@@ -54,7 +54,6 @@
 		private function call($request) {
 			$data = json_encode($request);
 			$resultText = $this->do_post_request($this->baseUrl . "/jsonapi", $data);
-			error_log($resultText);
 			$response = json_decode($resultText, true);
 			if ($response == NULL) {
 				if (function_exists("json_last_error")) {
@@ -238,6 +237,13 @@
 				throw new Exception(curl_error($ch));
 			}
 			curl_close($ch);
+		}
+		
+		public function getRevisionSummary($roid) {
+			$request = $this->buildRequest("ServiceInterface", "getRevisionSummary", array(
+				"roid" => $roid
+			));
+			return $this->call($request);
 		}
 		
 		public function getDataObjects($roid) {
