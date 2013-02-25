@@ -142,6 +142,33 @@
 			));
 			return $this->call($request);
 		}
+		
+		public function registerProgressTopic($type, $description) {
+			$request = $this->buildRequest("ServiceInterface", "registerProgressTopic", array(
+				"type" => $type,
+				"description" => $description
+			));
+			return $this->call($request);
+		}
+		
+		public function updateProgressTopic($topicId, $state, $progress) {
+			$request = $this->buildRequest("ServiceInterface", "updateProgressTopic", array(
+				"topicId" => $topicId,
+				"state" => array(
+					"__type" => "SLongActionState",
+					"state" => $state,
+					"progress" => $progress
+				)
+			));
+			return $this->call($request);
+		}
+		
+		public function unregisterProgressTopic($topicId) {
+			$request = $this->buildRequest("ServiceInterface", "unregisterProgressTopic", array(
+				"topicId" => $topicId
+			));
+			$this->call($request);
+		}
 
 		public function getProject($oid) {
 			$request = $this->buildRequest("ServiceInterface", "getProjectByPoid", array(

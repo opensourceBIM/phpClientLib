@@ -8,6 +8,10 @@
 	
 	class NotificationHandler {
 	
+		public function newRevision($roid) {
+		
+		}
+	
 		public function newLogAction($uuid, $logAction, $serviceIdentifier, $profileIdentifier, $token=null, $apiUrl=null) {
 			error_log($serviceIdentifier . "." . $profileIdentifier);
 			if ($serviceIdentifier == "PHP Quantizator") {
@@ -36,6 +40,8 @@
 			} else if ($serviceIdentifier == "Floor Demo") {
 				if ($logAction["__type"] == "SNewRevisionAdded") {
 					$bimServerApi = new BimServerApi($apiUrl, $token);
+					$topicId = $bimServerApi->registerProgressTopic("RUNNING_SERVICE", "Running floor demonstration");
+					$bimServerApi->updateProgressTopic($topicId, "STARTED", -1);
 					$revision = $bimServerApi->getRevision($logAction["revisionId"]);
 					$user = $bimServerApi->getUserByUoid($revision["userId"]);
 					if ($revision["comment"] == "M1_project (start).ifc") {
@@ -62,6 +68,8 @@
 						}
 						
 						$bimServerApi->checkin($poid, "Added floors", "M1_project (result).ifc", $deserializer["oid"], getcwd() . "/files/M1_project (result).ifc");
+						$bimServerApi->updateProgressTopic($topicId, "FINISHED", -1);
+						$bimServerApi->unregisterProgressTopic($topicId);
 					}
 				}			
 			} else if ($serviceIdentifier == "PHP BCF Mailer") {
