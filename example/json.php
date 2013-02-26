@@ -6,110 +6,110 @@
 	$data = file_get_contents('php://input');
 	$bimServerApi = new BimServerApi("", null);
 	
-	class NotificationHandler {
+	class RemoteServiceHandler {
 	
-		public function newRevision($roid) {
-		
-		}
-	
-		public function newLogAction($uuid, $logAction, $serviceIdentifier, $profileIdentifier, $token=null, $apiUrl=null) {
+		public function newRevision($poid, $roid, $serviceIdentifier, $profileIdentifier, $token=null, $apiUrl=null) {
 			error_log($serviceIdentifier . "." . $profileIdentifier);
 			if ($serviceIdentifier == "PHP Quantizator") {
-				if ($logAction["__type"] == "SNewRevisionAdded") {
-					$bimServerApi = new BimServerApi($apiUrl, $token);
-					$roid = $logAction["revisionId"];
-					$response = $bimServerApi->getRevisionSummary($roid);
-					
-					$html = "<table><tr><th>Type</th><th>Amount</th></tr>";
-					foreach ($response["list"] as $container) {
-						$html .= "<tr><td colspan=\"2\">" . $container["name"] . "</td></tr>";
-						foreach ($container["types"] as $type) {
-							$html .= "<tr><td>" . $type["name"] . "</td><td>" . $type["count"] . "</td></tr>";
-						}
+				$topicId = $bimServerApi->registerProgressTopic("RUNNING_SERVICE", "Running PHP Quantizator");
+				$bimServerApi->updateProgressTopic($topicId, "STARTED", -1);
+				$bimServerApi = new BimServerApi($apiUrl, $token);
+				$response = $bimServerApi->getRevisionSummary($roid);
+				
+				$html = "<table><tr><th>Type</th><th>Amount</th></tr>";
+				foreach ($response["list"] as $container) {
+					$html .= "<tr><td colspan=\"2\">" . $container["name"] . "</td></tr>";
+					foreach ($container["types"] as $type) {
+						$html .= "<tr><td>" . $type["name"] . "</td><td>" . $type["count"] . "</td></tr>";
 					}
-					$html .= "</table>";
-					
-					$extendedDataSchema = $bimServerApi->getExtendedDataSchemaByNamespace("http://extend.bimserver.org/htmlsummary");
-					
-					$bimServerApi->addExtendedDataToRevision($roid, "HTML Summary", $html, $extendedDataSchema["oid"]);
 				}
-				return json_decode("{}");
+				$html .= "</table>";
+				
+				$extendedDataSchema = $bimServerApi->getExtendedDataSchemaByNamespace("http://extend.bimserver.org/htmlsummary");
+				
+				$bimServerApi->addExtendedDataToRevision($roid, "HTML Summary", $html, $extendedDataSchema["oid"]);
+
+				$bimServerApi->updateProgressTopic($topicId, "FINISHED", -1);
+				$bimServerApi->unregisterProgressTopic($topicId);
 			} else if ($serviceIdentifier == "PHP Logger") {
+				$topicId = $bimServerApi->registerProgressTopic("RUNNING_SERVICE", "Running floor demonstration");
 				$sql = "INSERT INTO incoming SET message='" . json_encode($logAction) . "'";
 				mysql_query($sql);
+				$bimServerApi->updateProgressTopic($topicId, "FINISHED", -1);
+				$bimServerApi->unregisterProgressTopic($topicId);
 			} else if ($serviceIdentifier == "Floor Demo") {
-				if ($logAction["__type"] == "SNewRevisionAdded") {
-					$bimServerApi = new BimServerApi($apiUrl, $token);
+				$bimServerApi = new BimServerApi($apiUrl, $token);
+				$revision = $bimServerApi->getRevision($roid);
+				$user = $bimServerApi->getUserByUoid($revision["userId"]);
+				if ($revision["comment"] == "M1_project (start).ifc") {
 					$topicId = $bimServerApi->registerProgressTopic("RUNNING_SERVICE", "Running floor demonstration");
 					$bimServerApi->updateProgressTopic($topicId, "STARTED", -1);
-					$revision = $bimServerApi->getRevision($logAction["revisionId"]);
-					$user = $bimServerApi->getUserByUoid($revision["userId"]);
-					if ($revision["comment"] == "M1_project (start).ifc") {
-						$poid = $logAction["projectId"];
-						
-						$deserializer = $bimServerApi->getSuggestedDeserializerForExtension("ifc");
-						
-						$mail             = new PHPMailer(); // defaults to using php "mail()"
-						$mail->SetFrom('demo@bimserver.org', 'Demo');
-						
-						$mail->AddAddress($user["username"], $user["name"]);
-						$mail->AddCC("ruben@logic-labs.nl", "Ruben de Laat");
-						$mail->AddCC("demo@bimserver.org", "Demo");
-	
-						$mail->Subject    = "Floors added";
-						$mail->AltBody    = "Floors added";
-						$mail->MsgHTML("Floors added");
-						
-						$mail->AddAttachment(getcwd() . "/files/floor.xls");
-						$mail->AddAttachment(getcwd() . "/files/floor.ifc");
 
-						if(!$mail->Send()) {
-						  error_log("Mailer Error: " . $mail->ErrorInfo);
-						}
-						
-						$bimServerApi->checkin($poid, "Added floors", "M1_project (result).ifc", $deserializer["oid"], getcwd() . "/files/M1_project (result).ifc");
-						$bimServerApi->updateProgressTopic($topicId, "FINISHED", -1);
-						$bimServerApi->unregisterProgressTopic($topicId);
+					$deserializer = $bimServerApi->getSuggestedDeserializerForExtension("ifc");
+					
+					$mail = new PHPMailer(); // defaults to using php "mail()"
+					$mail->SetFrom('demo@bimserver.org', 'Demo');
+					
+					$mail->AddAddress($user["username"], $user["name"]);
+					$mail->AddCC("ruben@logic-labs.nl", "Ruben de Laat");
+					$mail->AddCC("demo@bimserver.org", "Demo");
+
+					$mail->Subject = "Floors added";
+					$mail->AltBody = "Floors added";
+					$mail->MsgHTML("Floors added");
+					
+					$mail->AddAttachment(getcwd() . "/files/floor.xls");
+					$mail->AddAttachment(getcwd() . "/files/floor.ifc");
+
+					if(!$mail->Send()) {
+					  error_log("Mailer Error: " . $mail->ErrorInfo);
 					}
-				}			
-			} else if ($serviceIdentifier == "PHP BCF Mailer") {
-				if ($logAction["__type"] == "SExtendedDataAddedToRevision") {
-					$bimServerApi = new BimServerApi($apiUrl, $token);
-					$revision = $bimServerApi->getRevision($logAction["revisionId"]);
-					$project = $bimServerApi->getProject($revision["projectId"]);
-					$extendedData = $bimServerApi->getExtendedData($logAction["extendedDataId"]);
-					$extendedDataSchema = $bimServerApi->getExtendedDataSchema($extendedData["schemaId"]);
-					if ($extendedDataSchema["namespace"] == "http://www.buildingsmart-tech.org/specifications/bcf-releases") {
-						$mail             = new PHPMailer(); // defaults to using php "mail()"
-						$mail->SetFrom('demo@bimserver.org', 'Demo');
-						
-						$mail->Subject    = "New BCF generated";
-						$mail->AltBody    = "New BCF generated";
-						$mail->MsgHTML("New BCF generated");
-						
-						$file = $bimServerApi->getFile($extendedData["fileId"]);
-						file_put_contents($file["filename"], $file["data"]);
-						
-						$mail->AddAttachment($file["filename"], $file["filename"], "base64", $file["mime"]);
-
-						foreach ($project["hasAuthorizedUsers"] as $userId) {
-							$user = $bimServerApi->getUserByUoid($userId);
-							$mail->AddAddress($user["username"], $user["name"]);
-							$mail->AddCC("ruben@logic-labs.nl", "Ruben de Laat");
-							$mail->AddCC("demo@bimserver.org", "Demo");
-						}
-
-						if(!$mail->Send()) {
-						  error_log("Mailer Error: " . $mail->ErrorInfo);
-						}
-					}
+					
+					$bimServerApi->checkin($poid, "Added floors", "M1_project (result).ifc", $deserializer["oid"], getcwd() . "/files/M1_project (result).ifc");
+					$bimServerApi->updateProgressTopic($topicId, "FINISHED", -1);
+					$bimServerApi->unregisterProgressTopic($topicId);
 				}
 			}
+			return json_decode("{}");
 		}
-		
-		public function progress($topicId, $longActionState) {
+
+		public function newExtendedData($roid, $edid, $serviceIdentifier, $profileIdentifier, $token=null, $apiUrl=null) {
+			$bimServerApi = new BimServerApi($apiUrl, $token);
+			$revision = $bimServerApi->getRevision($roid);
+			$project = $bimServerApi->getProject($revision["projectId"]);
+			$extendedData = $bimServerApi->getExtendedData($edid);
+			$extendedDataSchema = $bimServerApi->getExtendedDataSchema($extendedData["schemaId"]);
+			if ($extendedDataSchema["namespace"] == "http://www.buildingsmart-tech.org/specifications/bcf-releases") {
+				$topicId = $bimServerApi->registerProgressTopic("RUNNING_SERVICE", "Running BCF Mailer");
+				$bimServerApi->updateProgressTopic($topicId, "STARTED", -1);
+			
+				$mail = new PHPMailer(); // defaults to using php "mail()"
+				$mail->SetFrom('demo@bimserver.org', 'Demo');
+				
+				$mail->Subject = "New BCF generated";
+				$mail->AltBody = "New BCF generated";
+				$mail->MsgHTML("New BCF generated");
+				
+				$file = $bimServerApi->getFile($extendedData["fileId"]);
+				file_put_contents($file["filename"], $file["data"]);
+				
+				$mail->AddAttachment($file["filename"], $file["filename"], "base64", $file["mime"]);
+
+				foreach ($project["hasAuthorizedUsers"] as $userId) {
+					$user = $bimServerApi->getUserByUoid($userId);
+					$mail->AddAddress($user["username"], $user["name"]);
+					$mail->AddCC("ruben@logic-labs.nl", "Ruben de Laat");
+					$mail->AddCC("demo@bimserver.org", "Demo");
+				}
+
+				if(!$mail->Send()) {
+				  error_log("Mailer Error: " . $mail->ErrorInfo);
+				}
+				$bimServerApi->updateProgressTopic($topicId, "FINISHED", -1);
+				$bimServerApi->unregisterProgressTopic($topicId);
+			}
 		}
-		
+
 		public function getPublicProfiles($serviceName) {
 			if ($serviceName == "PHP Quantizator") {
 				return array(
@@ -241,6 +241,5 @@
 		}
 	}
 
-	$notificationHandler = new NotificationHandler();
-	echo $bimServerApi->processIncoming($data, $notificationHandler);
+	echo $bimServerApi->processIncoming($data, new RemoteServiceHandler());
 ?>

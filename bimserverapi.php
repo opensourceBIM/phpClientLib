@@ -53,7 +53,7 @@
 
 		private function call($request) {
 			$data = json_encode($request);
-			$resultText = $this->do_post_request($this->baseUrl . "/jsonapi", $data);
+			$resultText = $this->do_post_request($this->baseUrl . "/json", $data);
 			$response = json_decode($resultText, true);
 			if ($response == NULL) {
 				if (function_exists("json_last_error")) {
