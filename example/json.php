@@ -1,5 +1,4 @@
 <?
-	include "header.php";
 	include "../bimserverapi.php";
 	include "phpmailer.inc.php";
 
@@ -11,9 +10,10 @@
 		public function newRevision($poid, $roid, $serviceIdentifier, $profileIdentifier, $token=null, $apiUrl=null) {
 			error_log($serviceIdentifier . "." . $profileIdentifier);
 			if ($serviceIdentifier == "PHP Quantizator") {
-				$topicId = $bimServerApi->registerProgressTopic("RUNNING_SERVICE", "Running PHP Quantizator");
-				$bimServerApi->updateProgressTopic($topicId, "STARTED", -1);
 				$bimServerApi = new BimServerApi($apiUrl, $token);
+				$revision = $bimServerApi->getRevision($roid);
+				$topicId = $bimServerApi->registerProgressOnRevisionTopic("RUNNING_SERVICE", $revision["projectId"], $revision["oid"], "Running PHP Quantizator");
+				$bimServerApi->updateProgressTopic($topicId, "STARTED", -1);
 				$response = $bimServerApi->getRevisionSummary($roid);
 				
 				$html = "<table><tr><th>Type</th><th>Amount</th></tr>";
@@ -32,17 +32,24 @@
 				$bimServerApi->updateProgressTopic($topicId, "FINISHED", -1);
 				$bimServerApi->unregisterProgressTopic($topicId);
 			} else if ($serviceIdentifier == "PHP Logger") {
+				include "dbsettings.php";
+
+				mysql_connect($host, $username, $password);
+				mysql_select_db($database);
+			
 				$topicId = $bimServerApi->registerProgressTopic("RUNNING_SERVICE", "Running floor demonstration");
 				$sql = "INSERT INTO incoming SET message='" . json_encode($logAction) . "'";
 				mysql_query($sql);
 				$bimServerApi->updateProgressTopic($topicId, "FINISHED", -1);
 				$bimServerApi->unregisterProgressTopic($topicId);
+				
+				mysql_close();
 			} else if ($serviceIdentifier == "Floor Demo") {
 				$bimServerApi = new BimServerApi($apiUrl, $token);
 				$revision = $bimServerApi->getRevision($roid);
 				$user = $bimServerApi->getUserByUoid($revision["userId"]);
 				if ($revision["comment"] == "M1_project (start).ifc") {
-					$topicId = $bimServerApi->registerProgressTopic("RUNNING_SERVICE", "Running floor demonstration");
+					$topicId = $bimServerApi->registerProgressOnRevisionTopic("RUNNING_SERVICE", $revision["projectId"], $revision["oid"], "Running floor demonstration");
 					$bimServerApi->updateProgressTopic($topicId, "STARTED", -1);
 
 					$deserializer = $bimServerApi->getSuggestedDeserializerForExtension("ifc");

@@ -37,8 +37,8 @@ $(function(){
 });
 </script>
 <?
-	include "header.php";
-	
+	include "dbsettings.php";
+
 	$sql = "SELECT * FROM incoming";
 	$result = mysql_query($sql);
 ?>
@@ -55,6 +55,3 @@ $(function(){
 	}
 ?>
 </table>
-<?
-	include "footer.php";
-?>

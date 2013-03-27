@@ -143,8 +143,18 @@
 			return $this->call($request);
 		}
 		
+		public function registerProgressOnRevisionTopic($type, $poid, $roid, $description) {
+			$request = $this->buildRequest("RegistryInterface", "registerProgressOnRevisionTopic", array(
+				"type" => $type,
+				"poid" => $poid,
+				"roid" => $roid,
+				"description" => $description
+			));
+			return $this->call($request);
+		}
+		
 		public function registerProgressTopic($type, $description) {
-			$request = $this->buildRequest("ServiceInterface", "registerProgressTopic", array(
+			$request = $this->buildRequest("RegistryInterface", "registerProgressTopic", array(
 				"type" => $type,
 				"description" => $description
 			));
@@ -152,7 +162,7 @@
 		}
 		
 		public function updateProgressTopic($topicId, $state, $progress) {
-			$request = $this->buildRequest("ServiceInterface", "updateProgressTopic", array(
+			$request = $this->buildRequest("RegistryInterface", "updateProgressTopic", array(
 				"topicId" => $topicId,
 				"state" => array(
 					"__type" => "SLongActionState",
@@ -164,7 +174,7 @@
 		}
 		
 		public function unregisterProgressTopic($topicId) {
-			$request = $this->buildRequest("ServiceInterface", "unregisterProgressTopic", array(
+			$request = $this->buildRequest("RegistryInterface", "unregisterProgressTopic", array(
 				"topicId" => $topicId
 			));
 			$this->call($request);
