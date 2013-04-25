@@ -11,9 +11,12 @@
 			error_log($serviceIdentifier . "." . $profileIdentifier);
 			if ($serviceIdentifier == "PHP Quantizator") {
 				$bimServerApi = new BimServerApi($apiUrl, $token);
+				$start = time() * 1000;
+				$end = null;
 				$revision = $bimServerApi->getRevision($roid);
+				$title = "Counting objects on revision " . $revision["id"];
 				$topicId = $bimServerApi->registerProgressOnRevisionTopic("RUNNING_SERVICE", $revision["projectId"], $revision["oid"], "Running PHP Quantizator");
-				$bimServerApi->updateProgressTopic($topicId, "STARTED", -1);
+				$bimServerApi->updateProgressTopic($topicId, "STARTED", $title, $start, $end, -1);
 				$response = $bimServerApi->getRevisionSummary($roid);
 				
 				$html = "<table><tr><th>Type</th><th>Amount</th></tr>";
@@ -29,7 +32,8 @@
 				
 				$bimServerApi->addExtendedDataToRevision($roid, "HTML Summary", $html, $extendedDataSchema["oid"]);
 
-				$bimServerApi->updateProgressTopic($topicId, "FINISHED", -1);
+				$end = time() * 1000;
+				$bimServerApi->updateProgressTopic($topicId, "FINISHED", $title, $start, $end, -1);
 				$bimServerApi->unregisterProgressTopic($topicId);
 			} else if ($serviceIdentifier == "PHP Logger") {
 				include "dbsettings.php";
@@ -48,9 +52,12 @@
 				$bimServerApi = new BimServerApi($apiUrl, $token);
 				$revision = $bimServerApi->getRevision($roid);
 				$user = $bimServerApi->getUserByUoid($revision["userId"]);
+				$start = time() * 1000;
+				$end = null;
+				$title = "Changing floor of revision " . $revision["id"];
 				if ($revision["comment"] == "M1_project (start).ifc") {
 					$topicId = $bimServerApi->registerProgressOnRevisionTopic("RUNNING_SERVICE", $revision["projectId"], $revision["oid"], "Running floor demonstration");
-					$bimServerApi->updateProgressTopic($topicId, "STARTED", -1);
+					$bimServerApi->updateProgressTopic($topicId, "STARTED", $title, $start, $end, -1);
 
 					$deserializer = $bimServerApi->getSuggestedDeserializerForExtension("ifc");
 					
@@ -72,8 +79,9 @@
 					  error_log("Mailer Error: " . $mail->ErrorInfo);
 					}
 					
+					$end = time() * 1000;
 					$bimServerApi->checkin($poid, "Added floors", "M1_project (result).ifc", $deserializer["oid"], getcwd() . "/files/M1_project (result).ifc");
-					$bimServerApi->updateProgressTopic($topicId, "FINISHED", -1);
+					$bimServerApi->updateProgressTopic($topicId, "FINISHED", $title, $start, $end, -1);
 					$bimServerApi->unregisterProgressTopic($topicId);
 				}
 			}

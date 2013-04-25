@@ -161,12 +161,15 @@
 			return $this->call($request);
 		}
 		
-		public function updateProgressTopic($topicId, $state, $progress) {
+		public function updateProgressTopic($topicId, $state, $title, $start, $end, $progress) {
 			$request = $this->buildRequest("RegistryInterface", "updateProgressTopic", array(
 				"topicId" => $topicId,
 				"state" => array(
 					"__type" => "SLongActionState",
 					"state" => $state,
+					"title" => $title,
+					"start" => $start,
+					"end" => $end,
 					"progress" => $progress
 				)
 			));
@@ -262,7 +265,8 @@
 				"comment" => $comment,
 				"merge" => false,
 				"deserializerOid" => $deserializerOid,
-				"file" => "@" . $filename
+				"file" => "@" . $filename,
+				"sync" => "true"
 			);
 
 			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
