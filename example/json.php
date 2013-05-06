@@ -7,10 +7,11 @@
 	
 	class RemoteServiceHandler {
 	
-		public function newRevision($poid, $roid, $serviceIdentifier, $profileIdentifier, $token=null, $apiUrl=null) {
+		public function newRevision($poid, $roid, $soid, $serviceIdentifier, $profileIdentifier, $token=null, $apiUrl=null) {
 			error_log($serviceIdentifier . "." . $profileIdentifier);
+			$bimServerApi = new BimServerApi($apiUrl, $token);
+			$service = $bimServerApi->getService($soid);
 			if ($serviceIdentifier == "PHP Quantizator") {
-				$bimServerApi = new BimServerApi($apiUrl, $token);
 				$start = time() * 1000;
 				$end = null;
 				$revision = $bimServerApi->getRevision($roid);
@@ -49,7 +50,6 @@
 				
 				mysql_close();
 			} else if ($serviceIdentifier == "Floor Demo") {
-				$bimServerApi = new BimServerApi($apiUrl, $token);
 				$revision = $bimServerApi->getRevision($roid);
 				$user = $bimServerApi->getUserByUoid($revision["userId"]);
 				$start = time() * 1000;
@@ -80,7 +80,51 @@
 					}
 					
 					$end = time() * 1000;
-					$bimServerApi->checkin($poid, "Added floors", "M1_project (result).ifc", $deserializer["oid"], getcwd() . "/files/M1_project (result).ifc");
+					$targetPoid = $poid;
+					if ($service["writeRevisionId"] != -1) {
+						$targetPoid = $service["writeRevisionId"]; 
+					}
+					$bimServerApi->checkin($targetPoid, "Added floors", "M1_project (result)_floor.ifc", $deserializer["oid"], getcwd() . "/files/M1_project (result)_floor.ifc");
+					$bimServerApi->updateProgressTopic($topicId, "FINISHED", $title, $start, $end, -1);
+					$bimServerApi->unregisterProgressTopic($topicId);
+				}
+			} else if ($serviceIdentifier == "Roof Demo") {
+				$revision = $bimServerApi->getRevision($roid);
+				$user = $bimServerApi->getUserByUoid($revision["userId"]);
+				$start = time() * 1000;
+				$end = null;
+				$title = "Changing roof of revision " . $revision["id"];
+				if ($revision["comment"] == "M1_project (start).ifc") {
+					$topicId = $bimServerApi->registerProgressOnRevisionTopic("RUNNING_SERVICE", $revision["projectId"], $revision["oid"], "Running roof demonstration");
+					$bimServerApi->updateProgressTopic($topicId, "STARTED", $title, $start, $end, -1);
+
+					$deserializer = $bimServerApi->getSuggestedDeserializerForExtension("ifc");
+					
+					$mail = new PHPMailer(); // defaults to using php "mail()"
+					$mail->SetFrom('demo@bimserver.org', 'Demo');
+					
+					$mail->AddAddress($user["username"], $user["name"]);
+					$mail->AddCC("ruben@logic-labs.nl", "Ruben de Laat");
+					$mail->AddCC("demo@bimserver.org", "Demo");
+
+					$mail->Subject = "Roof added";
+					$mail->AltBody = "Roof added";
+					$mail->MsgHTML("Roof added");
+					
+					$mail->AddAttachment(getcwd() . "/files/roof.xls");
+					$mail->AddAttachment(getcwd() . "/files/roof.ifc");
+
+					if(!$mail->Send()) {
+					  error_log("Mailer Error: " . $mail->ErrorInfo);
+					}
+					
+					$end = time() * 1000;
+					$targetPoid = $poid;
+					if ($service["writeRevisionId"] != -1) {
+						$targetPoid = $service["writeRevisionId"]; 
+					}
+					
+					$bimServerApi->checkin($targetPoid, "Added roof", "M1_project (result)_roof.ifc", $deserializer["oid"], getcwd() . "/files/M1_project (result)_roof.ifc");
 					$bimServerApi->updateProgressTopic($topicId, "FINISHED", $title, $start, $end, -1);
 					$bimServerApi->unregisterProgressTopic($topicId);
 				}
@@ -174,6 +218,16 @@
 						"identifier" => "p2",
 						"name" => "Breedplaten",
 						"description" => "Vervangt vloer door breedplaten",
+						"publicProfile" => true
+					)
+				);
+			} else if ($serviceName == "Roof Demo") {
+				return array(
+					array(
+						"__type" => "SProfileDescriptor",
+						"identifier" => "p1",
+						"name" => "Dak",
+						"description" => "Iets met dak",
 						"publicProfile" => true
 					)
 				);

@@ -143,6 +143,13 @@
 			return $this->call($request);
 		}
 		
+		public function getService($soid) {
+			$request = $this->buildRequest("ServiceInterface", "getService", array(
+				"soid" => $soid
+			));
+			return $this->call($request);
+		}
+
 		public function registerProgressOnRevisionTopic($type, $poid, $roid, $description) {
 			$request = $this->buildRequest("RegistryInterface", "registerProgressOnRevisionTopic", array(
 				"type" => $type,
