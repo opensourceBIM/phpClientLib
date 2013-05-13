@@ -1,13 +1,13 @@
 <?php
 include_once "replacer.php";
 
-class TrappenService extends Replacer  {
+class DakkappellenService extends Replacer  {
 	public function getTitle($revision) {
-		return "Trappen toegevoegd aan revisie " . $revision["id"];
+		return "Dakkappellen toegevoegd aan revisie " . $revision["id"];
 	}
 	
 	public function getFilename() {
-		return "trappen.ifc";
+		return "dakkappellen.ifc";
 	}
 	
 	public function getDefinition() {
@@ -15,7 +15,7 @@ class TrappenService extends Replacer  {
 	}
 	
 	public function getIdentifier() {
-		return "trappen";
+		return "dakkappellen";
 	}
 	
 	public function getPublicProfiles() {
@@ -23,7 +23,7 @@ class TrappenService extends Replacer  {
 			array(
 				"__type" => "SProfileDescriptor",
 				"name" => "Default",
-				"description" => "Voeg trappen toe",
+				"description" => "Voeg dakkappellen toe",
 				"identifier" => "default",
 				"publicProfile" => true
 			)

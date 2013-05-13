@@ -2,11 +2,17 @@
 	try {
 		include "../api/bimserverapi.php";
 		include "phpmailer.inc.php";
-		include "services/vloeren.php";
-		include "services/dak.php";
+		
+		include "services/dakkap.php";
+		include "services/dakkappellen.php";
+		include "services/deurbellen.php";
 		include "services/kalkzandsteen.php";
-		include "services/kozijnen.php";
+		include "services/plafonds.php";
+		include "services/reclame.php";
+		include "services/tegelwerk.php";
+		include "services/trapleuningen.php";
 		include "services/trappen.php";
+		
 		include "services/counter.php";
 		include "services/logger.php";
 		include "services/bcfmailer.php";
@@ -18,11 +24,16 @@
 			private $services = array();
 
 			public function __construct() {
-				$this->registerService(new VloerenService());
-				$this->registerService(new DakService());
+				$this->registerService(new DakkapService());
+				$this->registerService(new DakkappellenService());
+				$this->registerService(new DeurbellenService());
 				$this->registerService(new KalkzandsteenService());
-				$this->registerService(new KozijnenService());
+				$this->registerService(new PlafondsService());
+				$this->registerService(new ReclameService());
+				$this->registerService(new TegelwerkService());
+				$this->registerService(new TrapleuningenService());
 				$this->registerService(new TrappenService());
+				
 				$this->registerService(new CounterService());
 				$this->registerService(new LoggerService());
 				$this->registerService(new BcfMailerService());
